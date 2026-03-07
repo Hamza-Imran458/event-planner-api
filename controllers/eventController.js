@@ -1,32 +1,43 @@
 // controllers/eventController.js
-// Handles HTTP logic for event endpoints (Day 1 - basic get all / get by id).
+// Handles HTTP logic for event endpoints (Day 2 - GET with error handling).
 
-const {
-  getAllEvents,
-  getEventById,
-} = require('../models/eventModel');
+const { getAllEvents, getEventById } = require('../models/eventModel');
 
-// GET /api/events - list all events
+/**
+ * GET /events - Return ALL events from the in-memory array.
+ * Returns 200 with JSON array (empty array if no events).
+ */
 function getEvents(req, res) {
-  const events = getAllEvents();
-  res.json(events);
-}
-
-// GET /api/events/:id - get one event by id
-function getEvent(req, res) {
-  const event = getEventById(req.params.id);
-  if (!event) {
-    return res.status(404).json({ message: 'Event not found' });
+  try {
+    const events = getAllEvents();
+    res.status(200).json(events);
+  } catch (err) {
+    console.error('Error in getEvents:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
-  res.json(event);
 }
 
-// Placeholder for later days (create, update, delete)
-// function createEvent(req, res) { ... }
-// function updateEvent(req, res) { ... }
-// function deleteEvent(req, res) { ... }
+/**
+ * GET /events/:id - Return a SINGLE event by its ID.
+ * Returns 200 with event object if found, 404 with "Event not found" if not.
+ */
+function getEventByIdHandler(req, res) {
+  try {
+    const id = req.params.id;
+    const event = getEventById(id);
+
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    res.status(200).json(event);
+  } catch (err) {
+    console.error('Error in getEventById:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 
 module.exports = {
   getEvents,
-  getEvent,
+  getEventById: getEventByIdHandler,
 };

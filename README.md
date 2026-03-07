@@ -1,4 +1,4 @@
-# Event Planner API – Day 1
+# Event Planner API
 
 A simple REST API for an Event Planner application (Node.js + Express, JavaScript).
 
@@ -15,7 +15,7 @@ Event Planer/
 ├── controllers/
 │   └── eventController.js   # Request handlers for events
 └── routes/
-    └── eventRoutes.js  # Routes for /api/events
+    └── eventRoutes.js  # Routes for /events
 ```
 
 ## Event data model
@@ -52,17 +52,26 @@ Data is stored in memory only (no database).
 
 3. **Try the API**
 
-   - Root: [http://localhost:5000](http://localhost:5000)
-   - All events: [http://localhost:5000/api/events](http://localhost:5000/api/events)
-   - One event: [http://localhost:5000/api/events/1](http://localhost:5000/api/events/1)
+   - Root: [http://localhost:3000](http://localhost:3000)
+   - All events: [http://localhost:3000/events](http://localhost:3000/events)
+   - One event: [http://localhost:3000/events/1](http://localhost:3000/events/1)
 
-The server runs on port **5000** by default. To use another port, set `PORT` (e.g. `PORT=3000 npm start`).
+The server runs on port **3000** by default. To use another port, set `PORT` (e.g. `PORT=5000 npm start`).
 
-## What’s included (Day 1)
+## Manual testing (Day 2 – GET endpoints)
 
-- Express app with JSON body parsing
-- In-memory event list with 3 sample events
-- **GET** `/api/events` – list all events
-- **GET** `/api/events/:id` – get one event (404 if not found)
+1. Start the server: `npm run dev`
+2. **GET all events** – open in browser: [http://localhost:3000/events](http://localhost:3000/events)  
+   - Expect: status 200, JSON array of all events (or empty array `[]` if none).
+3. **GET event by id** – open: [http://localhost:3000/events/1](http://localhost:3000/events/1)  
+   - Expect: status 200, single event object.
+4. **GET non-existent event** – open: [http://localhost:3000/events/999](http://localhost:3000/events/999)  
+   - Expect: status 404, JSON `{ "message": "Event not found" }`.
 
-Create, update, and delete can be added in later days.
+## What’s included
+
+- **Day 1:** Express app, in-memory events, basic structure.
+- **Day 2:** GET endpoints with error handling:
+  - **GET** `/events` – list all events (200 + JSON array).
+  - **GET** `/events/:id` – one event by id (200 + object, or 404 + error message).
+  - Try-catch in controller; 500 for unexpected errors.
