@@ -8,6 +8,9 @@ const eventController = require('../controllers/eventController');
 // GET /events - return all events (200 + JSON array)
 router.get('/', eventController.getEvents);
 
+// POST /events - create a new event (201 + new event object)
+router.post('/', eventController.createEvent);
+
 // GET /events/:id - return single event by id (200 + object, or 404)
 router.get('/:id', eventController.getEventById);
 

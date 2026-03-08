@@ -1,7 +1,7 @@
 // controllers/eventController.js
 // Handles HTTP logic for event endpoints (Day 2 - GET with error handling).
 
-const { getAllEvents, getEventById } = require('../models/eventModel');
+const { getAllEvents, getEventById, addEvent } = require('../models/eventModel');
 
 /**
  * GET /events - Return ALL events from the in-memory array.
@@ -37,7 +37,33 @@ function getEventByIdHandler(req, res) {
   }
 }
 
+/**
+ * POST /events - Create a NEW event.
+ * Expects JSON body: { name, date, location, description }
+ * Returns 201 with the newly created event object.
+ * Returns 400 if any required field is missing.
+ */
+function createEvent(req, res) {
+  try {
+    const { name, date, location, description } = req.body;
+
+    // Validate required fields
+    if (!name || !date || !location || !description) {
+      return res.status(400).json({
+        message: 'All fields are required: name, date, location, description',
+      });
+    }
+
+    const newEvent = addEvent({ name, date, location, description });
+    res.status(201).json(newEvent);
+  } catch (err) {
+    console.error('Error in createEvent:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
 module.exports = {
   getEvents,
   getEventById: getEventByIdHandler,
+  createEvent,
 };
