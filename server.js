@@ -38,6 +38,10 @@ app.use('/', authRoutes);
 app.use('/events', eventRoutes);
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Event Planner API running at http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Event Planner API running at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

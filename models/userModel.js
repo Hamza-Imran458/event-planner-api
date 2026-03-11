@@ -52,6 +52,7 @@ function findUserById(id) {
 }
 
 module.exports = {
+    users,
     findUserByUsername,
     findUserById,
 };
