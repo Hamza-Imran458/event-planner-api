@@ -1,5 +1,5 @@
 // routes/eventRoutes.js
-// Defines URL routes for event resources (Day 2 - GET endpoints).
+// Defines URL routes for event resources (updated Day 4 - PUT + DELETE).
 
 const express = require('express');
 const router = express.Router();
@@ -13,5 +13,11 @@ router.post('/', eventController.createEvent);
 
 // GET /events/:id - return single event by id (200 + object, or 404)
 router.get('/:id', eventController.getEventById);
+
+// PUT /events/:id - update an event by id (200 + updated object, 400, or 404)
+router.put('/:id', eventController.updateEvent);
+
+// DELETE /events/:id - remove an event by id (200 + message, or 404)
+router.delete('/:id', eventController.deleteEvent);
 
 module.exports = router;
