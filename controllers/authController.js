@@ -9,7 +9,7 @@
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { findUserByUsername } = require('../models/userModel');
+const { findUserByUsername, addUser } = require('../models/userModel');
 
 /**
  * POST /login
@@ -63,4 +63,38 @@ function login(req, res) {
     }
 }
 
-module.exports = { login };
+/**
+ * POST /register
+ * Registers a new user.
+ */
+function register(req, res) {
+    try {
+        const { username, password } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({
+                message: 'Username and password are required',
+            });
+        }
+
+        // Check if user already exists
+        const existingUser = findUserByUsername(username);
+        if (existingUser) {
+            return res.status(409).json({ message: 'Username already taken' });
+        }
+
+        // Add new user
+        const newUser = addUser(username, password);
+
+        return res.status(201).json({ 
+            message: 'User registered successfully',
+            user: { id: newUser.id, username: newUser.username }
+        });
+
+    } catch (err) {
+        console.error('Error in register:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+module.exports = { login, register };

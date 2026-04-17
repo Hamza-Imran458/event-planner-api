@@ -51,8 +51,30 @@ function findUserById(id) {
     return users.find((u) => u.id === id);
 }
 
+/**
+ * Add a new user to the in-memory array.
+ * Password will be hashed before storing.
+ */
+function addUser(username, password) {
+    // Generate a new sequential ID based on the highest existing ID
+    const newId = users.length > 0 ? Math.max(...users.map((u) => u.id)) + 1 : 1;
+    
+    // Hash the plain-text password
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    
+    const newUser = {
+        id: newId,
+        username: username,
+        password: hashedPassword,
+    };
+    
+    users.push(newUser);
+    return newUser;
+}
+
 module.exports = {
     users,
     findUserByUsername,
     findUserById,
+    addUser,
 };
