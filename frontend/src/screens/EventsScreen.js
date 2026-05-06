@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { CommonActions } from '@react-navigation/native';
 import {
   Alert,
   FlatList,
@@ -6,9 +7,10 @@ import {
   Text,
   TouchableOpacity,
   View,
-  SafeAreaView
+  useWindowDimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Calendar as CalendarIcon, Plus, LogOut } from 'lucide-react-native';
 import { API_BASE_URL } from '../config/api';
@@ -36,6 +38,10 @@ function sortEventsNewestFirst(list) {
 }
 
 export default function EventsScreen({ route, navigation }) {
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const isCompactHeader = width < 420;
+
   const initialToken = route?.params?.token || '';
   const initialUsername = route?.params?.username || '';
 
@@ -173,10 +179,20 @@ export default function EventsScreen({ route, navigation }) {
   }
 
   async function logout() {
-    await AsyncStorage.removeItem('token');
-    await AsyncStorage.removeItem('username');
+    try {
+      await AsyncStorage.multiRemove(['token', 'username']);
+    } catch {
+      // still leave the app logged out in UI
+    }
     setToken('');
-    navigation.replace('Login');
+    setUsername('');
+    setEvents([]);
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      })
+    );
   }
 
   function openCreateModal() {
@@ -215,13 +231,20 @@ export default function EventsScreen({ route, navigation }) {
   return (
     <LinearGradient colors={['#020617', '#0F172A', '#1E293B']} style={styles.container}>
       <SafeAreaView style={{ flex: 1 }}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Your Events</Text>
-            <Text style={styles.subtitle}>Welcome {username || 'User'} - manage your schedule</Text>
+        <View style={[styles.header, isCompactHeader && styles.headerCompact]}>
+          <View style={styles.headerTextBlock}>
+            <Text style={[styles.title, isCompactHeader && styles.titleCompact]}>Your Events</Text>
+            <Text style={styles.subtitle} numberOfLines={2}>
+              Welcome {username || 'User'} — manage your schedule
+            </Text>
           </View>
           <View style={styles.headerActions}>
-            <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
+            <TouchableOpacity
+              onPress={() => logout()}
+              style={styles.logoutBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Log out"
+            >
               <LogOut size={20} color="#FFF" />
             </TouchableOpacity>
           </View>
@@ -230,7 +253,10 @@ export default function EventsScreen({ route, navigation }) {
         <FlatList
           data={events}
           keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: Math.max(insets.bottom, 16) + 100 },
+          ]}
           renderItem={({ item }) => (
             <EventCard
               item={item}
@@ -247,7 +273,12 @@ export default function EventsScreen({ route, navigation }) {
         />
 
         {events.length > 0 && (
-          <TouchableOpacity style={styles.fab} onPress={openCreateModal}>
+          <TouchableOpacity
+            style={[styles.fab, { bottom: Math.max(insets.bottom, 12) + 16 }]}
+            onPress={openCreateModal}
+            accessibilityRole="button"
+            accessibilityLabel="Create event"
+          >
             <LinearGradient
               colors={['#2563EB', '#0F172A']}
               style={styles.fabGradient}
@@ -285,11 +316,22 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(148,163,184,0.24)',
     backgroundColor: 'rgba(15,23,42,0.5)',
   },
+  headerCompact: {
+    alignItems: 'flex-start',
+  },
+  headerTextBlock: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: 12,
+  },
   title: {
     fontSize: 28,
     fontWeight: '800',
     color: '#F8FAFC',
     letterSpacing: 0.2,
+  },
+  titleCompact: {
+    fontSize: 22,
   },
   subtitle: {
     fontSize: 13,
@@ -299,6 +341,7 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0,
   },
   logoutBtn: {
     padding: 11,
@@ -310,7 +353,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 110,
     flexGrow: 1,
   },
   emptyState: {
@@ -334,7 +376,6 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 36,
     right: 24,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 8 },

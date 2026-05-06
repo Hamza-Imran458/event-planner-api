@@ -19,13 +19,17 @@ export default function EventCard({ item, onEdit, onDelete }) {
         </View>
 
         <View style={styles.infoRow}>
-          <Calendar size={14} color="#94A3B8" />
-          <Text style={styles.infoText}>{item.date} {item.time && `• ${item.time}`}</Text>
+          <Calendar size={14} color="#94A3B8" style={styles.infoIcon} />
+          <Text style={styles.infoText} numberOfLines={3}>
+            {item.date} {item.time && `• ${item.time}`}
+          </Text>
         </View>
 
         <View style={styles.infoRow}>
-          <MapPin size={14} color="#94A3B8" />
-          <Text style={styles.infoText}>{item.location}</Text>
+          <MapPin size={14} color="#94A3B8" style={styles.infoIcon} />
+          <Text style={styles.infoText} numberOfLines={3}>
+            {item.location}
+          </Text>
         </View>
 
         <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
@@ -71,10 +75,15 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 4,
   },
+  infoIcon: {
+    marginTop: 2,
+  },
   infoText: {
+    flex: 1,
+    flexShrink: 1,
     color: '#CBD5E1',
     fontSize: 13,
     marginLeft: 8,
