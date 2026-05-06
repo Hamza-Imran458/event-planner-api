@@ -1,6 +1,9 @@
 const bcrypt = require('bcryptjs');
+const { loadJsonFile, saveJsonFile, persistEnabled } = require('../../shared/jsonPersistence');
 
-const users = [
+const USERS_FILE = 'users.json';
+
+const SEED_USERS = [
   {
     id: 1,
     username: 'admin',
@@ -12,6 +15,28 @@ const users = [
     password: bcrypt.hashSync('user123', 10),
   },
 ];
+
+const users = [];
+
+function persistUsers() {
+  saveJsonFile(USERS_FILE, users);
+}
+
+function bootstrapUsers() {
+  if (!persistEnabled()) {
+    SEED_USERS.forEach((u) => users.push({ ...u }));
+    return;
+  }
+  const loaded = loadJsonFile(USERS_FILE, null);
+  if (Array.isArray(loaded) && loaded.length > 0) {
+    users.push(...loaded);
+  } else {
+    SEED_USERS.forEach((u) => users.push({ ...u }));
+    persistUsers();
+  }
+}
+
+bootstrapUsers();
 
 function findUserByUsername(username) {
   return users.find((u) => u.username === username);
@@ -34,6 +59,7 @@ function addUser(username, password) {
       };
 
       users.push(newUser);
+      persistUsers();
       resolve(newUser);
     });
   });

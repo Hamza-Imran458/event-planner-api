@@ -1,4 +1,8 @@
-const events = [
+const { loadJsonFile, saveJsonFile, persistEnabled } = require('../../shared/jsonPersistence');
+
+const EVENTS_FILE = 'events.json';
+
+const SEED_EVENTS = [
   {
     id: 1,
     userId: 1,
@@ -28,6 +32,27 @@ const events = [
   },
 ];
 
+const events = [];
+
+function persistEvents() {
+  saveJsonFile(EVENTS_FILE, events);
+}
+
+function bootstrapEvents() {
+  if (!persistEnabled()) {
+    return;
+  }
+  const loaded = loadJsonFile(EVENTS_FILE, null);
+  if (Array.isArray(loaded) && loaded.length > 0) {
+    events.push(...loaded);
+  } else {
+    SEED_EVENTS.forEach((e) => events.push({ ...e }));
+    persistEvents();
+  }
+}
+
+bootstrapEvents();
+
 function getAllEvents(userId) {
   if (userId) {
     return events.filter((e) => e.userId === userId);
@@ -55,6 +80,7 @@ function getNextId() {
 function addEvent(event, userId) {
   const newEvent = { id: getNextId(), userId, ...event };
   events.push(newEvent);
+  persistEvents();
   return newEvent;
 }
 
@@ -71,6 +97,7 @@ function updateEvent(id, fields, userId) {
     }
   });
 
+  persistEvents();
   return event;
 }
 
@@ -81,6 +108,7 @@ function deleteEvent(id, userId) {
   if (userId && events[index].userId !== userId) return null;
 
   const [deleted] = events.splice(index, 1);
+  persistEvents();
   return deleted;
 }
 
