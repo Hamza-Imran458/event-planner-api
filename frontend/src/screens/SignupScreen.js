@@ -11,43 +11,45 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { User, Lock } from 'lucide-react-native';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
 import { API_BASE_URL } from '../config/api';
 import GlassCard from '../components/GlassCard';
 import Input from '../components/Input';
 import GradientButton from '../components/GradientButton';
 
+const signupSchema = Yup.object().shape({
+  username: Yup.string()
+    .trim()
+    .min(3, 'Username must be at least 3 characters')
+    .required('Username is required'),
+  password: Yup.string()
+    .min(6, 'Password must be at least 6 characters')
+    .required('Password is required'),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('password')], 'Passwords do not match')
+    .required('Please confirm your password'),
+});
+
 export default function SignupScreen({ navigation }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function register() {
-    if (!username.trim() || !password.trim()) {
-      Alert.alert('Validation', 'Username and password are required.');
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      Alert.alert('Validation', 'Passwords do not match.');
-      return;
-    }
-
+  async function handleRegister(values) {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
+        body: JSON.stringify({ username: values.username.trim(), password: values.password }),
       });
       const data = await response.json();
-      
+
       if (response.ok) {
         Alert.alert('Success', 'Account created successfully!', [
           { text: 'Log In Now', onPress: () => navigation.goBack() }
         ]);
       } else {
-        Alert.alert('Register', data.message || `HTTP ${response.status}`);
+        Alert.alert('Register failed', data.message || `HTTP ${response.status}`);
       }
     } catch (err) {
       Alert.alert('Error', 'Could not connect to server.');
@@ -59,7 +61,7 @@ export default function SignupScreen({ navigation }) {
   return (
     <LinearGradient colors={['#020617', '#0F172A', '#1E293B']} style={styles.container}>
       <SafeAreaView style={{ flex: 1 }}>
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
@@ -69,44 +71,61 @@ export default function SignupScreen({ navigation }) {
               <Text style={styles.subtitle}>Set up your account to organize events</Text>
             </View>
 
-            <GlassCard>
-              <View style={styles.inputContainer}>
-                <Input
-                  icon={User}
-                  placeholder="Username"
-                  value={username}
-                  onChangeText={setUsername}
-                  autoCapitalize="none"
-                />
-              </View>
+            <Formik
+              initialValues={{ username: '', password: '', confirmPassword: '' }}
+              validationSchema={signupSchema}
+              onSubmit={handleRegister}
+            >
+              {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+                <GlassCard>
+                  <View style={styles.inputContainer}>
+                    <Input
+                      icon={User}
+                      placeholder="Username"
+                      value={values.username}
+                      onChangeText={handleChange('username')}
+                      onBlur={handleBlur('username')}
+                      autoCapitalize="none"
+                      error={errors.username}
+                      touched={touched.username}
+                    />
+                  </View>
 
-              <View style={styles.inputContainer}>
-                <Input
-                  icon={Lock}
-                  placeholder="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  showPasswordToggle
-                />
-              </View>
+                  <View style={styles.inputContainer}>
+                    <Input
+                      icon={Lock}
+                      placeholder="Password"
+                      value={values.password}
+                      onChangeText={handleChange('password')}
+                      onBlur={handleBlur('password')}
+                      showPasswordToggle
+                      error={errors.password}
+                      touched={touched.password}
+                    />
+                  </View>
 
-              <View style={styles.inputContainer}>
-                <Input
-                  icon={Lock}
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  showPasswordToggle
-                />
-              </View>
+                  <View style={styles.inputContainer}>
+                    <Input
+                      icon={Lock}
+                      placeholder="Confirm Password"
+                      value={values.confirmPassword}
+                      onChangeText={handleChange('confirmPassword')}
+                      onBlur={handleBlur('confirmPassword')}
+                      showPasswordToggle
+                      error={errors.confirmPassword}
+                      touched={touched.confirmPassword}
+                    />
+                  </View>
 
-              <GradientButton
-                title={loading ? 'CREATING ACCOUNT...' : 'Create Account'}
-                onPress={register}
-                disabled={loading}
-                style={styles.button}
-              />
-            </GlassCard>
+                  <GradientButton
+                    title={loading ? 'CREATING ACCOUNT...' : 'Create Account'}
+                    onPress={handleSubmit}
+                    disabled={loading}
+                    style={styles.button}
+                  />
+                </GlassCard>
+              )}
+            </Formik>
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>Already have an account? </Text>
@@ -163,5 +182,5 @@ const styles = StyleSheet.create({
     color: '#93C5FD',
     fontSize: 14,
     fontWeight: '700',
-  }
+  },
 });

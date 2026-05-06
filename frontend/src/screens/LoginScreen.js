@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// Coursework 2 requirement: citation included for Justin Fletcher (see README).
 import {
   Alert,
   StyleSheet,
@@ -12,28 +13,33 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Mail, Lock } from 'lucide-react-native';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
 import { API_BASE_URL } from '../config/api';
 import GlassCard from '../components/GlassCard';
 import Input from '../components/Input';
 import GradientButton from '../components/GradientButton';
 
+const loginSchema = Yup.object().shape({
+  username: Yup.string()
+    .trim()
+    .min(3, 'Username must be at least 3 characters')
+    .required('Username is required'),
+  password: Yup.string()
+    .min(6, 'Password must be at least 6 characters')
+    .required('Password is required'),
+});
+
 export default function LoginScreen({ navigation }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function login() {
-    if (!username.trim() || !password.trim()) {
-      Alert.alert('Validation', 'Username and password are required.');
-      return;
-    }
-
+  async function handleLogin(values) {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
+        body: JSON.stringify({ username: values.username.trim(), password: values.password }),
       });
       const data = await response.json();
 
@@ -43,11 +49,11 @@ export default function LoginScreen({ navigation }) {
       }
 
       await AsyncStorage.setItem('token', data.token);
-      await AsyncStorage.setItem('username', username.trim());
+      await AsyncStorage.setItem('username', values.username.trim());
 
       navigation.replace('Events', {
         token: data.token,
-        username: username.trim(),
+        username: values.username.trim(),
       });
     } catch (err) {
       Alert.alert('Error', 'Could not connect to server.');
@@ -59,7 +65,7 @@ export default function LoginScreen({ navigation }) {
   return (
     <LinearGradient colors={['#020617', '#0F172A', '#1E293B']} style={styles.container}>
       <SafeAreaView style={{ flex: 1 }}>
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
@@ -69,34 +75,48 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.subtitle}>Sign in to manage your schedule efficiently</Text>
             </View>
 
-            <GlassCard>
-              <View style={styles.inputContainer}>
-                <Input
-                  icon={Mail}
-                  placeholder="Username"
-                  value={username}
-                  onChangeText={setUsername}
-                  autoCapitalize="none"
-                />
-              </View>
+            <Formik
+              initialValues={{ username: '', password: '' }}
+              validationSchema={loginSchema}
+              onSubmit={handleLogin}
+            >
+              {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+                <GlassCard>
+                  <View style={styles.inputContainer}>
+                    <Input
+                      icon={Mail}
+                      placeholder="Username"
+                      value={values.username}
+                      onChangeText={handleChange('username')}
+                      onBlur={handleBlur('username')}
+                      autoCapitalize="none"
+                      error={errors.username}
+                      touched={touched.username}
+                    />
+                  </View>
 
-              <View style={styles.inputContainer}>
-                <Input
-                  icon={Lock}
-                  placeholder="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  showPasswordToggle
-                />
-              </View>
+                  <View style={styles.inputContainer}>
+                    <Input
+                      icon={Lock}
+                      placeholder="Password"
+                      value={values.password}
+                      onChangeText={handleChange('password')}
+                      onBlur={handleBlur('password')}
+                      showPasswordToggle
+                      error={errors.password}
+                      touched={touched.password}
+                    />
+                  </View>
 
-              <GradientButton
-                title={loading ? 'SIGNING IN...' : 'Sign In'}
-                onPress={login}
-                disabled={loading}
-                style={styles.button}
-              />
-            </GlassCard>
+                  <GradientButton
+                    title={loading ? 'SIGNING IN...' : 'Sign In'}
+                    onPress={handleSubmit}
+                    disabled={loading}
+                    style={styles.button}
+                  />
+                </GlassCard>
+              )}
+            </Formik>
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>Don't have an account? </Text>
@@ -153,5 +173,5 @@ const styles = StyleSheet.create({
     color: '#93C5FD',
     fontSize: 14,
     fontWeight: '700',
-  }
+  },
 });

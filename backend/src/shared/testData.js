@@ -5,22 +5,28 @@ const userModel = require('../features/auth/auth.model');
 const testEvents = [
   {
     id: 1,
+    userId: 1,
     name: 'Test Event 1',
     date: '2025-01-01',
+    time: '10:00',
     location: 'Test Location 1',
     description: 'Description 1',
   },
   {
     id: 2,
+    userId: 1,
     name: 'Test Event 2',
     date: '2025-02-02',
+    time: '11:00',
     location: 'Test Location 2',
     description: 'Description 2',
   },
   {
     id: 3,
+    userId: 1,
     name: 'Test Event 3',
     date: '2025-03-03',
+    time: '12:00',
     location: 'Test Location 3',
     description: 'Description 3',
   },

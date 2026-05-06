@@ -8,7 +8,8 @@ const {
 
 function getEvents(req, res) {
   try {
-    const events = getAllEvents();
+    const userId = req.user ? req.user.id : null;
+    const events = getAllEvents(userId);
     res.status(200).json(events);
   } catch (err) {
     console.error('Error in getEvents:', err);
@@ -18,8 +19,9 @@ function getEvents(req, res) {
 
 function getEventByIdHandler(req, res) {
   try {
+    const userId = req.user ? req.user.id : null;
     const id = req.params.id;
-    const event = getEventById(id);
+    const event = getEventById(id, userId);
 
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
@@ -34,15 +36,33 @@ function getEventByIdHandler(req, res) {
 
 function createEvent(req, res) {
   try {
-    const { name, date, location, description } = req.body;
+    const { name, date, time, location, description } = req.body;
+    const userId = req.user.id;
 
-    if (!name || !date || !location || !description) {
-      return res.status(400).json({
-        message: 'All fields are required: name, date, location, description',
-      });
+    // Field validations
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ message: 'Name is required' });
+    }
+    if (!date || date.trim() === '') {
+      return res.status(400).json({ message: 'Date is required' });
+    }
+    if (!time || String(time).trim() === '') {
+      return res.status(400).json({ message: 'Time is required' });
+    }
+    if (!location || location.trim() === '') {
+      return res.status(400).json({ message: 'Location is required' });
+    }
+    if (!description || description.trim() === '') {
+      return res.status(400).json({ message: 'Description is required' });
     }
 
-    const newEvent = addEvent({ name, date, location, description });
+    const newEvent = addEvent(
+      { name, date, time: String(time).trim(), location, description },
+      userId
+    );
+    
+    console.log(`[TERMINAL] Event Created: ID ${newEvent.id} by User ${userId}`);
+    
     res.status(201).json(newEvent);
   } catch (err) {
     console.error('Error in createEvent:', err);
@@ -53,20 +73,33 @@ function createEvent(req, res) {
 function updateEventHandler(req, res) {
   try {
     const { id } = req.params;
-    const { name, date, location, description } = req.body;
+    const { name, date, time, location, description } = req.body;
+    const userId = req.user.id;
 
-    const hasFields = [name, date, location, description].some(
+    const hasFields = [name, date, time, location, description].some(
       (v) => v !== undefined
     );
     if (!hasFields) {
       return res.status(400).json({ message: 'No fields to update' });
     }
 
-    const updated = updateEvent(id, { name, date, location, description });
+    const updated = updateEvent(
+      id,
+      {
+        name,
+        date,
+        time: time !== undefined ? String(time).trim() : undefined,
+        location,
+        description,
+      },
+      userId
+    );
 
     if (!updated) {
-      return res.status(404).json({ message: 'Event not found' });
+      return res.status(404).json({ message: 'Event not found or unauthorized' });
     }
+
+    console.log(`[TERMINAL] Event Updated: ID ${id} by User ${userId}`);
 
     res.status(200).json(updated);
   } catch (err) {
@@ -78,11 +111,14 @@ function updateEventHandler(req, res) {
 function deleteEventHandler(req, res) {
   try {
     const { id } = req.params;
-    const deleted = deleteEvent(id);
+    const userId = req.user.id;
+    const deleted = deleteEvent(id, userId);
 
     if (!deleted) {
-      return res.status(404).json({ message: 'Event not found' });
+      return res.status(404).json({ message: 'Event not found or unauthorized' });
     }
+
+    console.log(`[TERMINAL] Event Deleted: ID ${id} by User ${userId}`);
 
     res.status(200).json({ message: 'Event deleted successfully' });
   } catch (err) {

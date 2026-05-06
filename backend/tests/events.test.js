@@ -18,7 +18,9 @@ describe('Event Endpoints', () => {
 
   describe('GET /events', () => {
     it('should return all events', async () => {
-      const response = await request(app).get('/events');
+      const response = await request(app)
+        .get('/events')
+        .set('Authorization', `Bearer ${token}`);
       expect(response.status).toBe(200);
       expect(response.body.length).toBe(3);
       expect(response.body[0].name).toBe('Test Event 1');
@@ -27,13 +29,17 @@ describe('Event Endpoints', () => {
 
   describe('GET /events/:id', () => {
     it('should return a specific event by ID', async () => {
-      const response = await request(app).get('/events/1');
+      const response = await request(app)
+        .get('/events/1')
+        .set('Authorization', `Bearer ${token}`);
       expect(response.status).toBe(200);
       expect(response.body.name).toBe('Test Event 1');
     });
 
     it('should return 404 for non-existent event ID', async () => {
-      const response = await request(app).get('/events/999');
+      const response = await request(app)
+        .get('/events/999')
+        .set('Authorization', `Bearer ${token}`);
       expect(response.status).toBe(404);
     });
   });
@@ -46,6 +52,7 @@ describe('Event Endpoints', () => {
         .send({
           name: 'New Test Event',
           date: '2025-12-25',
+          time: '10:30',
           location: 'New Location',
           description: 'New Description',
         });
@@ -58,6 +65,7 @@ describe('Event Endpoints', () => {
       const response = await request(app).post('/events').send({
         name: 'Unauthorized Event',
         date: '2025-12-25',
+        time: '10:30',
         location: 'New Location',
         description: 'New Description',
       });
@@ -113,7 +121,9 @@ describe('Event Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body.message).toMatch(/deleted/i);
 
-      const getRes = await request(app).get('/events/1');
+      const getRes = await request(app)
+        .get('/events/1')
+        .set('Authorization', `Bearer ${token}`);
       expect(getRes.status).toBe(404);
     });
 

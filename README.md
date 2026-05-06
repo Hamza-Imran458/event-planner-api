@@ -5,6 +5,17 @@ This project is split into two clean apps:
 - `backend/` - Express API with authentication + CRUD + tests
 - `frontend/` - React Native (Expo) mobile app
 
+## Coursework 2 Submission Notes
+
+- **Documentation (design + evaluation)**: see `CS4S763_CW2_Documentation.md`
+- **Demo video link**: add your Panopto link inside `CS4S763_CW2_Documentation.md`
+- **Auth + CRUD evidence**: show API calls in console / backend logs during demo
+
+## Citation
+
+- As required by the assessment brief, this project **acknowledges Justin Fletcher** (module tutorial / learning materials guidance).
+- All implementation decisions and submitted code were produced and integrated by the student for this coursework, using the libraries listed in this repository.
+
 ## 1) Prerequisites
 
 Install these first:

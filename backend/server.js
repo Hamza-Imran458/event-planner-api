@@ -1,3 +1,4 @@
+// Coursework 2 requirement: citation included for Justin Fletcher (see README).
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 

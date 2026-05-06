@@ -57,6 +57,7 @@ describe('Auth Endpoints', () => {
         .send({
           name: 'Protected Event',
           date: '2025-10-10',
+          time: '10:30',
           location: 'Anywhere',
           description: 'Desc',
         });
@@ -71,6 +72,7 @@ describe('Auth Endpoints', () => {
         .send({
           name: 'Protected Event',
           date: '2025-10-10',
+          time: '10:30',
           location: 'Anywhere',
           description: 'Desc',
         });
@@ -82,6 +84,7 @@ describe('Auth Endpoints', () => {
       const response = await request(app).post('/events').send({
         name: 'Protected Event',
         date: '2025-10-10',
+        time: '10:30',
         location: 'Anywhere',
         description: 'Desc',
       });

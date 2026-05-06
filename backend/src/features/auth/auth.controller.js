@@ -7,13 +7,14 @@ async function login(req, res) {
     const { username, password } = req.body;
     console.log(`Login attempt for: ${username}`);
 
-    if (!username || !password) {
-      return res.status(400).json({
-        message: 'Username and password are required',
-      });
+    if (!username || username.trim() === '') {
+      return res.status(400).json({ message: 'Username is required' });
+    }
+    if (!password || password.trim() === '') {
+      return res.status(400).json({ message: 'Password is required' });
     }
 
-    const user = findUserByUsername(username);
+    const user = findUserByUsername(username.trim());
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -42,18 +43,23 @@ async function register(req, res) {
   try {
     const { username, password } = req.body;
 
-    if (!username || !password) {
+    if (!username || username.trim().length < 3) {
       return res.status(400).json({
-        message: 'Username and password are required',
+        message: 'Username must be at least 3 characters long',
+      });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({
+        message: 'Password must be at least 6 characters long',
       });
     }
 
-    const existingUser = findUserByUsername(username);
+    const existingUser = findUserByUsername(username.trim());
     if (existingUser) {
       return res.status(409).json({ message: 'Username already taken' });
     }
 
-    const newUser = await addUser(username, password);
+    const newUser = await addUser(username.trim(), password);
 
     return res.status(201).json({
       message: 'User registered successfully',

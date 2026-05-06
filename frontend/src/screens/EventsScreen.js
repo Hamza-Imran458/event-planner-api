@@ -47,9 +47,7 @@ export default function EventsScreen({ route, navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  
-  const defaultForm = { name: '', date: '', time: '', location: '', description: '' };
-  const [form, setForm] = useState(defaultForm);
+  const [modalInitialValues, setModalInitialValues] = useState({ name: '', date: '', time: '', location: '', description: '' });
 
   // Sample data fallback if no events
   const fallbackEvents = [
@@ -65,7 +63,14 @@ export default function EventsScreen({ route, navigation }) {
 
   const fetchEvents = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/events`);
+      const storedToken = await AsyncStorage.getItem('token');
+      if (!storedToken) return;
+
+      const response = await fetch(`${API_BASE_URL}/events`, {
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+        },
+      });
       const data = await response.json();
       if (Array.isArray(data)) {
         setEvents(sortEventsNewestFirst(data));
@@ -82,41 +87,35 @@ export default function EventsScreen({ route, navigation }) {
       const storedUsername = await AsyncStorage.getItem('username');
       if (storedToken) setToken(storedToken);
       if (storedUsername) setUsername(storedUsername);
+      fetchEvents();
     }
     bootstrapAuth();
-    fetchEvents();
   }, [fetchEvents]);
 
-  function validateForm() {
-    if (!form.name.trim() || !form.date.trim() || !form.location.trim()) {
-      Alert.alert('Validation', 'Name, Date, and Location are required.');
-      return false;
-    }
-    return true;
-  }
-
-  async function handleSubmit() {
+  async function handleSubmit(values, { resetForm }) {
     if (!token) {
       Alert.alert('Unauthorized', 'Please login first.');
       return;
     }
-    if (!validateForm()) return;
 
     if (isEditing) {
       try {
+        console.log(`[FRONTEND] Updating event: ${editingId}`, values);
         const response = await fetch(`${API_BASE_URL}/events/${editingId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(form),
+          body: JSON.stringify(values),
         });
         const data = await response.json();
         if (!response.ok) {
           Alert.alert('Update failed', data.message || `HTTP ${response.status}`);
           return;
         }
+        console.log(`[FRONTEND] Event updated successfully: ${editingId}`);
+        resetForm();
         fetchEvents();
         closeModal();
       } catch (err) {
@@ -124,20 +123,23 @@ export default function EventsScreen({ route, navigation }) {
       }
     } else {
       try {
+        console.log('[FRONTEND] Creating new event:', values);
         const response = await fetch(`${API_BASE_URL}/events`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(form),
+          body: JSON.stringify(values),
         });
         const data = await response.json();
-  
+
         if (!response.ok) {
           Alert.alert('Create failed', data.message || `HTTP ${response.status}`);
           return;
         }
+        console.log('[FRONTEND] Event created successfully:', data.id);
+        resetForm();
         fetchEvents();
         closeModal();
       } catch (err) {
@@ -153,6 +155,7 @@ export default function EventsScreen({ route, navigation }) {
     }
 
     try {
+      console.log(`[FRONTEND] Deleting event: ${item.id}`);
       const response = await fetch(`${API_BASE_URL}/events/${item.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
@@ -162,6 +165,7 @@ export default function EventsScreen({ route, navigation }) {
         Alert.alert('Delete failed', data.message || `HTTP ${response.status}`);
         return;
       }
+      console.log(`[FRONTEND] Event deleted successfully: ${item.id}`);
       fetchEvents();
     } catch (err) {
       Alert.alert('Error', 'Could not delete event.');
@@ -176,14 +180,14 @@ export default function EventsScreen({ route, navigation }) {
   }
 
   function openCreateModal() {
-    setForm(defaultForm);
+    setModalInitialValues({ name: '', date: '', time: '', location: '', description: '' });
     setIsEditing(false);
     setEditingId(null);
     setModalVisible(true);
   }
 
   function openEditModal(item) {
-    setForm({
+    setModalInitialValues({
       name: item.name || '',
       date: item.date || '',
       time: item.time || '',
@@ -257,8 +261,7 @@ export default function EventsScreen({ route, navigation }) {
           visible={modalVisible}
           onClose={closeModal}
           onSubmit={handleSubmit}
-          form={form}
-          setForm={setForm}
+          initialValues={modalInitialValues}
           isEditing={isEditing}
         />
 
