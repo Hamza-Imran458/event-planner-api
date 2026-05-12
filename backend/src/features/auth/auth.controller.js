@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { findUserByUsername, addUser } = require('./auth.model');
+const { findUserByUsername, addUser, updatePassword } = require('./auth.model');
 
 async function login(req, res) {
   try {
@@ -71,4 +71,29 @@ async function register(req, res) {
   }
 }
 
-module.exports = { login, register };
+async function forgotPassword(req, res) {
+  try {
+    const { username, newPassword } = req.body;
+
+    if (!username || username.trim() === '') {
+      return res.status(400).json({ message: 'Username is required' });
+    }
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters long' });
+    }
+
+    const user = findUserByUsername(username.trim());
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await updatePassword(username.trim(), newPassword);
+
+    return res.status(200).json({ message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('Error in forgotPassword:', err);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+}
+
+module.exports = { login, register, forgotPassword };

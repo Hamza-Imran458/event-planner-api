@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// Coursework 2 requirement: citation included for Justin Fletcher (see README).
 import {
   Alert,
   StyleSheet,
@@ -10,9 +9,8 @@ import {
   Platform,
   SafeAreaView
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Mail, Lock } from 'lucide-react-native';
+import { User, Lock } from 'lucide-react-native';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import { API_BASE_URL } from '../config/api';
@@ -20,41 +18,39 @@ import GlassCard from '../components/GlassCard';
 import Input from '../components/Input';
 import GradientButton from '../components/GradientButton';
 
-const loginSchema = Yup.object().shape({
+const forgotPasswordSchema = Yup.object().shape({
   username: Yup.string()
     .trim()
     .min(3, 'Username must be at least 3 characters')
     .required('Username is required'),
-  password: Yup.string()
+  newPassword: Yup.string()
     .min(6, 'Password must be at least 6 characters')
-    .required('Password is required'),
+    .required('New password is required'),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('newPassword')], 'Passwords do not match')
+    .required('Please confirm your new password'),
 });
 
-export default function LoginScreen({ navigation }) {
+export default function ForgotPasswordScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
-  async function handleLogin(values) {
+  async function handleResetPassword(values) {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
+      const response = await fetch(`${API_BASE_URL}/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: values.username.trim(), password: values.password }),
+        body: JSON.stringify({ username: values.username.trim(), newPassword: values.newPassword }),
       });
       const data = await response.json();
 
-      if (!response.ok || !data.token) {
-        Alert.alert('Login failed', data.message || `HTTP ${response.status}`);
-        return;
+      if (response.ok) {
+        Alert.alert('Success', 'Password updated successfully!', [
+          { text: 'Log In Now', onPress: () => navigation.goBack() }
+        ]);
+      } else {
+        Alert.alert('Update failed', data.message || `HTTP ${response.status}`);
       }
-
-      await AsyncStorage.setItem('token', data.token);
-      await AsyncStorage.setItem('username', values.username.trim());
-
-      navigation.replace('Events', {
-        token: data.token,
-        username: values.username.trim(),
-      });
     } catch (err) {
       Alert.alert('Error', 'Could not connect to server.');
     } finally {
@@ -71,20 +67,20 @@ export default function LoginScreen({ navigation }) {
         >
           <View style={styles.content}>
             <View style={styles.header}>
-              <Text style={styles.title}>Event Planner</Text>
-              <Text style={styles.subtitle}>Sign in to manage your schedule efficiently</Text>
+              <Text style={styles.title}>Reset Password</Text>
+              <Text style={styles.subtitle}>Enter your username and a new password</Text>
             </View>
 
             <Formik
-              initialValues={{ username: '', password: '' }}
-              validationSchema={loginSchema}
-              onSubmit={handleLogin}
+              initialValues={{ username: '', newPassword: '', confirmPassword: '' }}
+              validationSchema={forgotPasswordSchema}
+              onSubmit={handleResetPassword}
             >
               {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
                 <GlassCard>
                   <View style={styles.inputContainer}>
                     <Input
-                      icon={Mail}
+                      icon={User}
                       placeholder="Username"
                       value={values.username}
                       onChangeText={handleChange('username')}
@@ -98,34 +94,43 @@ export default function LoginScreen({ navigation }) {
                   <View style={styles.inputContainer}>
                     <Input
                       icon={Lock}
-                      placeholder="Password"
-                      value={values.password}
-                      onChangeText={handleChange('password')}
-                      onBlur={handleBlur('password')}
+                      placeholder="New Password"
+                      value={values.newPassword}
+                      onChangeText={handleChange('newPassword')}
+                      onBlur={handleBlur('newPassword')}
                       showPasswordToggle
-                      error={errors.password}
-                      touched={touched.password}
+                      error={errors.newPassword}
+                      touched={touched.newPassword}
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Input
+                      icon={Lock}
+                      placeholder="Confirm New Password"
+                      value={values.confirmPassword}
+                      onChangeText={handleChange('confirmPassword')}
+                      onBlur={handleBlur('confirmPassword')}
+                      showPasswordToggle
+                      error={errors.confirmPassword}
+                      touched={touched.confirmPassword}
                     />
                   </View>
 
                   <GradientButton
-                    title={loading ? 'SIGNING IN...' : 'Sign In'}
+                    title={loading ? 'UPDATING...' : 'Reset Password'}
                     onPress={handleSubmit}
                     disabled={loading}
                     style={styles.button}
                   />
-
-                  <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgotPasswordContainer}>
-                    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-                  </TouchableOpacity>
                 </GlassCard>
               )}
             </Formik>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                <Text style={styles.registerLink}>Sign Up</Text>
+              <Text style={styles.footerText}>Remember your password? </Text>
+              <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Text style={styles.loginLink}>Log In</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -173,18 +178,9 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 14,
   },
-  registerLink: {
+  loginLink: {
     color: '#93C5FD',
     fontSize: 14,
     fontWeight: '700',
-  },
-  forgotPasswordContainer: {
-    marginTop: 15,
-    alignItems: 'center',
-  },
-  forgotPasswordText: {
-    color: '#94A3B8',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

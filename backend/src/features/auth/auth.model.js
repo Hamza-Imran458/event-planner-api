@@ -65,9 +65,27 @@ function addUser(username, password) {
   });
 }
 
+function updatePassword(username, newPassword) {
+  return new Promise((resolve, reject) => {
+    bcrypt.hash(newPassword, 10, (err, hashedPassword) => {
+      if (err) return reject(err);
+
+      const userIndex = users.findIndex((u) => u.username === username);
+      if (userIndex !== -1) {
+        users[userIndex].password = hashedPassword;
+        persistUsers();
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    });
+  });
+}
+
 module.exports = {
   users,
   findUserByUsername,
   findUserById,
   addUser,
+  updatePassword,
 };

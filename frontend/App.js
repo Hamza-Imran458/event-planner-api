@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
+import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
 import EventsScreen from './src/screens/EventsScreen';
 
 const Stack = createNativeStackNavigator();
@@ -32,6 +33,11 @@ export default function App() {
             name="Signup"
             component={SignupScreen}
             options={{ title: 'Create Account' }}
+          />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPasswordScreen}
+            options={{ title: 'Reset Password' }}
           />
           <Stack.Screen
             name="Events"

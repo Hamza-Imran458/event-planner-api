@@ -27,6 +27,8 @@ app.get('/', (req, res) => {
     message: 'Event Planner API is running',
     endpoints: {
       login: 'POST /login',
+      register: 'POST /register',
+      forgotPassword: 'POST /forgot-password',
       allEvents: 'GET /events',
       eventById: 'GET /events/:id',
       createEvent: 'POST /events  (requires JWT)',
